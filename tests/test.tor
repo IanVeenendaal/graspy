@@ -1,0 +1,24 @@
+frequency  frequency  
+(
+  frequency_list   : sequence(150.0 GHz)
+)
+
+global_coor coor_sys
+(
+)
+
+lens_feed_coor  coor_sys
+(
+    x_axis          : struct(x: -1.0, y: 0.0, z: 0.0),
+    base            : ref(planar_cut_coor_sys)
+)
+
+bor_mesh  bor_mesh  
+(
+  coor_sys         : ref(lens_coor),
+  regions          : table
+    (
+        1    1.16469E+01    1.00000E+00    0.00000E+00  
+    ),
+  nodes            : table
+    (
