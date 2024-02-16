@@ -1,9 +1,11 @@
 from pathlib import Path
+from dataclasses import dataclass
 
 
+@dataclass
 class CoordinateSystem:
-    origin: list[float]
-    x_axis: list[float]
+    origin: dict[float]
+    x_axis: dict[float]
 
 
 class TOR:
@@ -25,6 +27,7 @@ class TOR:
         ]
 
         self._append_lines_to_file(obj_str)
+        return obj_str
 
     def set_coordinate_system(
         self,
@@ -32,34 +35,45 @@ class TOR:
         name: str,
         ref: str,
     ) -> None:
+        origin = f"struct(x: {coordinate_system.origin['x']} m, y: {coordinate_system.origin['y']} m, z: {coordinate_system.origin['z']} m)"
+        x_axis = f"struct(x: {coordinate_system.x_axis['x']}, y: {coordinate_system.x_axis['y']}, z: {coordinate_system.x_axis['z']})"
         obj_str = [
             f"{name}\tcoor_sys",
             f"(",
-            f"\torigin\t: struct({coordinate_system.origin})",
-            f"\tx_axis\t: struct({coordinate_system.x_axis})",
-            f"\tref\t: ref({ref})",
+            f"\torigin\t: {origin},",
+            f"\tx_axis\t: {x_axis},",
+            f"\tbase\t: ref({ref})",
             f")",
         ]
 
         self._append_lines_to_file(obj_str)
+        return obj_str
 
     def add_bor_mesh(
-        self, name: str, mesh: list[list[float]], ref: str, regions: list[float]
+        self, name: str, mesh: list[list[float]], ref: str, regions: list[list[float]]
     ) -> None:
+
+        regions_str = []
+        for i, region in enumerate(regions):
+            regions_str.append(f"\t\t\t{i+1}\t{region[0]}\t{region[1]}\t{region[2]}")
+
+        mesh_str = []
+        for i, node in enumerate(mesh):
+            mesh_str.append(f"\t\t\t{i+1}\t{node[0]}\t{node[1]}")
         obj_str = [
             f"{name}\tbor_mesh",
             f"(",
-            f"\tcoor_sys\t: ref({ref})",
+            f"\tcoor_sys\t: ref({ref}),",
             f"\tregions\t: table",
             f"\t\t(",
-            f"\t\t\t1\t{regions[0]}\t{regions[1]}\t{regions[2]}",
-            f"\t\t)",
+            *regions_str,
+            f"\t\t),",
             f"\tnodes\t: table",
             f"\t\t(",
-            f"\t\t\t1\t{mesh[0][0]}\t{mesh[0][1]}",
-            # repeat for rest of mesh
+            *mesh_str,
             f"\t\t)",
             f")",
         ]
 
         self._append_lines_to_file(obj_str)
+        return obj_str
