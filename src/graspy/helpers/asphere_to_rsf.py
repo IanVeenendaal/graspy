@@ -48,13 +48,14 @@ class Lens:
     name: str
     surface: list[Surface]
     aperture: float
+    thickness: float
 
     def __post_init__(self):
         if len(self.surface) != 2:
             raise ValueError("Lens must have exactly 2 surfaces")
 
 
-def asphere_to_rsf(lens: Lens, wavelength: float):
+def asphere_to_rsf(lens: Lens, wavelength: float, prefix: Optional[str] = None):
     spacing = wavelength / 10
     n = int(lens.aperture / spacing) + 1
 
@@ -67,9 +68,9 @@ def asphere_to_rsf(lens: Lens, wavelength: float):
             y *= -1  # Invert back surface sag tables
 
         # save x and y to file as rho and z
-        save_file = f"L{lens.name}-S{i+1}.rsf"
+        save_file = f"{prefix}L{lens.name}-S{i+1}.rsf"
         with open(save_file, "w+") as f:
             f.write(f"Lens: {lens.name}, Surface: {i+1}\n")
             f.write(f"{len(x)}\t1\t0\n")
             for i in range(len(x)):
-                f.write(f"{x[i]*1e-3}\t{y[i]*1e-3}\n")
+                f.write(f"{x[i]}\t{y[i]}\n")

@@ -2,10 +2,116 @@ from pathlib import Path
 from dataclasses import dataclass
 
 
+class struct(dict):
+    def __init__(self, *args, unit="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.unit = unit
+
+    def __repr__(self):
+        if self.unit == "":
+            return f"struct({', '.join(f'{k}: {v}' for k, v in self.items())})"
+        return f"struct({', '.join(f'{k}: {v} {self.unit}' for k, v in self.items())})"
+
+
+class sequence(list):
+    def __init__(self, *args, unit="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.unit = unit
+
+    def __repr__(self):
+        if self.unit == "":
+            return f"sequence({', '.join(f'{v}' for v in self)})"
+        return f"sequence({', '.join(f'{v} {self.unit}' for v in self)})"
+
+
+class table(list):
+    def __init__(self, *args, unit="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.unit = unit
+
+    def __repr__(self):
+        # TODO: Add string representation for table
+        pass
+
+
+class reference:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def __repr__(self):
+        return f"ref({self.name})"
+
+
 @dataclass
 class CoordinateSystem:
-    origin: dict[float]
-    x_axis: dict[float]
+    origin: struct
+    x_axis: struct
+    reference: reference
+    name: str
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  coor_sys",
+            f"(",
+            f"{'  origin':19}: {self.origin},",
+            f"{'  x_axis':19}: {self.x_axis},",
+            f"{'  base':19}: {self.reference}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
+@dataclass
+class PlanarCut:
+    coor_sys: reference
+    rho_range: struct
+    phi_range: struct
+    name: str
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  planar_cut",
+            f"(",
+            f"{'  coor_sys':19}: {self.coor_sys},",
+            f"{'  rho_range':19}: {self.rho_range},",
+            f"{'  phi_range':19}: {self.phi_range}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
+@dataclass
+class SphericalCut:
+    coor_sys: reference
+    theta_range: struct
+    phi_range: struct
+    name: str
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  spherical_cut",
+            f"(",
+            f"{'  coor_sys':19}: {self.coor_sys},",
+            f"{'  theta_range':19}: {self.theta_range},",
+            f"{'  phi_range':19}: {self.phi_range}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
+@dataclass
+class Frequency:
+    frequency_list: sequence
+    name: str
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  frequency",
+            f"(",
+            f"{'  frequency_list':19}: {self.frequency_list}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
 
 
 class TOR:
@@ -16,46 +122,42 @@ class TOR:
         with open(self.file, "a") as f:
             f.write("\n".join(lines) + "\n")
 
-    def set_frequency(self, frequency_list: list[float], name: str) -> None:
-        if len(frequency_list) == 1:
-            f = frequency_list[0]
-        obj_str = [
-            f"{name}\tfrequency",
-            "(",
-            f"\tfrequency_list\t: sequence({f} GHz)",
-            ")",
-        ]
+    def _append_block_to_file(self, block: str) -> None:
+        with open(self.file, "a") as f:
+            f.write(block)
 
-        self._append_lines_to_file(obj_str)
-        return obj_str
+    def set_frequency(self, frequency: Frequency) -> str:
+        self._append_block_to_file(str(frequency))
+        return str(frequency)
 
     def set_coordinate_system(
         self,
         coordinate_system: CoordinateSystem,
-        name: str,
-        ref: str,
-    ) -> None:
-        origin = f"struct(x: {coordinate_system.origin['x']} m, y: {coordinate_system.origin['y']} m, z: {coordinate_system.origin['z']} m)"
-        x_axis = f"struct(x: {coordinate_system.x_axis['x']}, y: {coordinate_system.x_axis['y']}, z: {coordinate_system.x_axis['z']})"
-        obj_str = [
-            f"{name}\tcoor_sys",
-            f"(",
-            f"\torigin\t: {origin},",
-            f"\tx_axis\t: {x_axis},",
-            f"\tbase\t: ref({ref})",
-            f")",
-        ]
+    ) -> str:
+        self._append_block_to_file(str(coordinate_system))
+        return str(coordinate_system)
 
-        self._append_lines_to_file(obj_str)
-        return obj_str
+    def add_planar_cut(self, planar_cut: PlanarCut) -> str:
+        self._append_block_to_file(str(planar_cut))
+        return str(planar_cut)
+
+    def add_spherical_cut(self, spherical_cut: SphericalCut) -> str:
+        self._append_block_to_file(str(spherical_cut))
+        return str(spherical_cut)
 
     def add_bor_mesh(
-        self, name: str, mesh: list[list[float]], ref: str, regions: list[list[float]]
+        self,
+        name: str,
+        mesh: list[list[float]],
+        ref: str,
+        regions: list[list[float]],
     ) -> None:
 
         regions_str = []
         for i, region in enumerate(regions):
-            regions_str.append(f"\t\t\t{i+1}\t{region[0]}\t{region[1]}\t{region[2]}")
+            regions_str.append(
+                f"\t\t\t{i+1}\t{region[0]}\t{region[1]}\t{region[2]}"
+            )
 
         mesh_str = []
         for i, node in enumerate(mesh):

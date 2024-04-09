@@ -31,10 +31,15 @@ class TestTOR(unittest.TestCase):
     def test_set_coordinate_system(self):
         origin = dict(x=0, y=0, z=0)
         x_axis = dict(x=1, y=0, z=0)
-        coordinate_system = CoordinateSystem(origin=origin, x_axis=x_axis)
         name = "coordinate_system_test"
         ref = "reference"
-        lines = self.tor.set_coordinate_system(coordinate_system, name, ref)
+        coordinate_system = CoordinateSystem(
+            origin=origin,
+            x_axis=x_axis,
+            name=name,
+            reference=ref,
+        )
+        lines = self.tor.set_coordinate_system(coordinate_system)
 
         expected_lines = [
             "coordinate_system_test\tcoor_sys",
