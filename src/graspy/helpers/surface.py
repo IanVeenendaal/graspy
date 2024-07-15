@@ -20,7 +20,7 @@ class LensSchema:
 class Surface:
     radius: float
     conic: float
-    even_asphere: Optional[list[float]]
+    even_asphere: Optional[list[float]] = None
 
     def __post_init__(self):
         self.curvature = 1 / self.radius
@@ -74,3 +74,32 @@ def asphere_to_rsf(lens: Lens, wavelength: float, prefix: Optional[str] = None):
             f.write(f"{len(x)}\t1\t0\n")
             for i in range(len(x)):
                 f.write(f"{x[i]}\t{y[i]}\n")
+
+
+def surface_to_sfc(
+    surface: Surface, x: np.ndarray, y: np.ndarray, name: Optional[str] = None
+) -> None:
+    """Convert a surface to a rectangular grid file for GRASP.
+
+    Args:
+        surface: The surface to convert.
+        x: The x coordinate of the grid.
+        y: The y coordinate of the grid.
+
+    Returns:
+        The rectangular grid.
+    """
+    xx, yy = np.meshgrid(x, y)
+    r = np.sqrt(xx**2 + yy**2)
+    grid = surface.tabulate(r)
+
+    save_file = f"{name}.sfc"
+    with open(save_file, "w") as f:
+        f.write(f"Surface: {name}\n")
+        f.write(f"{min(x)}\t{min(y)}\t{max(x)}\t{max(y)}\n")
+        f.write(f"{len(x)}\t{len(y)}\n")
+        for i in range(len(x)):
+            line = ""
+            for j in range(len(y)):
+                line += f"{grid[i,j]}\t"
+            f.write(line + "\n")
