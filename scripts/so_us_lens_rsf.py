@@ -1,4 +1,4 @@
-from graspy.helpers.asphere_to_rsf import Surface, Lens, asphere_to_rsf
+from graspy.helpers.surface import Surface, Lens, asphere_to_rsf
 from pathlib import Path
 import pandas as pd
 
