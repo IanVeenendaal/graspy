@@ -44,6 +44,44 @@ class Surface:
 
 
 @dataclass
+class BiconicSurface:
+    radius: list[float]
+    conic: list[float]
+    even_asphere: Optional[list[list[float]]] = None
+
+    def __post_init__(self):
+        if len(self.radius) != 2:
+            raise ValueError("BiconicSurface must have exactly 2 radii")
+        if len(self.conic) != 2:
+            raise ValueError("BiconicSurface must have exactly 2 conics")
+
+        self.curvature = [1 / r for r in self.radius]
+
+    def tabulate_xy(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """Generate sag table of surface.
+
+        Args:
+            x: The x coordinate of the surface.
+            y: The y coordinate of the surface.
+
+        Returns:
+            Sag table.
+        """
+        cx, cy = self.curvature
+        kx, ky = self.conic
+        sag = (cx * x**2 + cy * y**2) / (
+            1
+            + np.sqrt(1 - (1 + kx) * cx**2 * x**2)
+            + np.sqrt(1 - (1 + ky) * cy**2 * y**2)
+        )
+        if self.even_asphere:
+            raise NotImplementedError(
+                "Even asphere not implemented for biconic surfaces"
+            )
+        return sag
+
+
+@dataclass
 class Lens:
     name: str
     surface: list[Surface]
@@ -77,7 +115,11 @@ def asphere_to_rsf(lens: Lens, wavelength: float, prefix: Optional[str] = None):
 
 
 def surface_to_sfc(
-    surface: Surface, x: np.ndarray, y: np.ndarray, name: Optional[str] = None
+    surface: Surface,
+    x: np.ndarray,
+    y: np.ndarray,
+    name: Optional[str] = None,
+    biconic=False,
 ) -> None:
     """Convert a surface to a rectangular grid file for GRASP.
 
@@ -90,8 +132,11 @@ def surface_to_sfc(
         The rectangular grid.
     """
     xx, yy = np.meshgrid(x, y)
-    r = np.sqrt(xx**2 + yy**2)
-    grid = surface.tabulate(r)
+    if biconic:
+        grid = surface.tabulate_xy(xx, yy)
+    else:
+        r = np.sqrt(xx**2 + yy**2)
+        grid = surface.tabulate(r)
 
     save_file = f"{name}.sfc"
     with open(save_file, "w") as f:

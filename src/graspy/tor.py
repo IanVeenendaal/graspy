@@ -1,5 +1,6 @@
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Any
 
 
 class struct(dict):
@@ -109,6 +110,66 @@ class Frequency:
             f"{self.name}  frequency",
             f"(",
             f"{'  frequency_list':19}: {self.frequency_list}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
+@dataclass
+class XYGrid:
+    name: str
+    file_name: str
+    xy_unit: str = "m"
+    z_unit: str = "m"
+    z_factor: float = 1.0
+    list: bool = True
+
+    def __repr__(self) -> str:
+        list = "on" if self.list else "off"
+        out = (
+            f"{self.name}  regular_xy_grid",
+            f"(",
+            f"{'  file_name':19}: {self.file_name}.sfc,",
+            f"{'  xy_unit':19}: {self.xy_unit},",
+            f"{'  z_unit':19}: {self.z_unit},",
+            f"{'  z_factor':19}: {self.z_factor}",
+            f"{'  list':19}: {list}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
+@dataclass
+class RectangularRim:
+    name: str
+    centre: struct
+    side_lengths: struct
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  rectangular_rim",
+            f"(",
+            f"{'  centre':19}: {self.centre},",
+            f"{'  side_lengths':19}: {self.side_lengths}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
+@dataclass
+class Reflector:
+    name: str
+    coor_sys: reference
+    surfaces: sequence
+    rim: RectangularRim
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  reflector",
+            f"(",
+            f"{'  coor_sys':19}: {self.coor_sys},",
+            f"{'  surfaces':19}: {self.surfaces},",
+            f"{'  rim':19}: {self.rim}",
             f")",
         )
         return "\n".join(out) + "\n"
