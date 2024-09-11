@@ -175,6 +175,62 @@ class Reflector:
         return "\n".join(out) + "\n"
 
 
+@dataclass
+class EllipticalPattern:
+    name: str
+    frequency: reference
+    coor_sys: reference
+    taper: float
+    taper_angles: struct
+    polarisation_angle: float
+    far_forced: bool
+
+    def _on_off(self, value: bool) -> str:
+        return "on" if value else "off"
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  elliptical_pattern",
+            f"(",
+            f"{'  frequency':19}: {self.frequency},",
+            f"{'  coor_sys':19}: {self.coor_sys},",
+            f"{'  taper':19}: {self.taper}",
+            f"{'  taper_angles':19}: {self.taper_angles}",
+            f"{'  polarisation_angle':21}: {self.polarisation_angle}",
+            f"{'  far_forced':19}: {self._on_off(self.far_forced)}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
+@dataclass
+class TabulatedPattern:
+    name: str
+    frequency: reference
+    coor_sys: reference
+    file_name: Path
+
+    def __post_init__(self) -> None:
+        self.file_name = self._check_filename(self.file_name)
+
+    def _check_filename(self, file_name: Path) -> Path:
+        if not file_name.exists():
+            raise FileNotFoundError(f"{file_name} does not exist")
+
+        return file_name.name
+
+    def __repr__(self) -> str:
+        out = (
+            f"{self.name}  tabulated_pattern",
+            f"(",
+            f"{'  frequency':19}: {self.frequency},",
+            f"{'  coor_sys':19}: {self.coor_sys},",
+            f"{'  file_name':19}: {str(self.file_name)}",
+            f")",
+        )
+        return "\n".join(out) + "\n"
+
+
 class TOR:
     def __init__(self, file: Path) -> None:
         self.file = file
@@ -240,3 +296,21 @@ class TOR:
 
         self._append_lines_to_file(obj_str)
         return obj_str
+
+    def add_elliptical_pattern(
+        self,
+        elliptical_pattern: EllipticalPattern,
+    ) -> str:
+        self._append_block_to_file(str(elliptical_pattern))
+        return str(elliptical_pattern)
+
+    def add_tabulated_pattern(
+        self,
+        tabulated_pattern: TabulatedPattern,
+    ) -> str:
+        # check if file exists, and change the file_name to be a relative path with respect to the TOR file
+        tabulated_pattern.file_name = tabulated_pattern.file_name.relative_to(
+            self.file.parent
+        )
+        self._append_block_to_file(str(tabulated_pattern))
+        return str(tabulated_pattern)
