@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 
 def zmx_hyperbolic(radius, conic):
@@ -22,9 +23,18 @@ def grasp_hyperbolic(a, c):
 
     def _hyperbolic(x, y):
         b = np.sqrt(c**2 - a**2)
-        return c - a / b * np.sqrt(b**2 + x**2 + y**2)
+        z = c - a / b * np.sqrt(b**2 + x**2 + y**2)
+        # offset to match Zemax, so z=0 at x=y=0
+        z -= c - a
+        return z
 
     return _hyperbolic
+
+
+def minim_func(params, x, y, z):
+    a, c = params
+    model = grasp_hyperbolic(a, c)
+    return np.sum((model(x, y) - z) ** 2)
 
 
 def main():
@@ -36,18 +46,28 @@ def main():
 
     # Hyperbolic surface
     zmx_hyperbolic_surface = zmx_hyperbolic(radius, conic)
-    grasp_hyperbolic_surface = grasp_hyperbolic(a, c)
 
     # Test
     x = np.linspace(-2, 2, 100)
     y = np.linspace(-2, 2, 100)
     X, Y = np.meshgrid(x, y)
     Z1 = zmx_hyperbolic_surface(X, Y)
-    Z2 = grasp_hyperbolic_surface(X, Y)
 
-    # Offset Z2 to match Z1
-    f = c - a
-    Z2 -= f
+    # Fit parameters of grasp_hyperbolic_surface to match Z1
+    params = np.array([a, c])
+    minim_func(params, X, Y, Z1)
+    result = minimize(
+        minim_func,
+        params,
+        args=(X, Y, Z1),
+        method="Nelder-Mead",
+        tol=1e-14,
+    )
+    a_fit, c_fit = result.x
+    print(f"Initial: a={a}, c={c}")
+    print(f"Fit: a={a_fit}, c={c_fit}")
+
+    Z2 = grasp_hyperbolic(a_fit, c_fit)(X, Y)
 
     # Surface plots
     fig, ax = plt.subplots(
@@ -58,13 +78,12 @@ def main():
     ax[1].plot_surface(X, Y, Z2)
     ax[1].set_title("Grasp")
 
-    if not np.allclose(Z1, Z2, rtol=1e-5, atol=1e-5):
-        # plot the difference
-        fig, ax = plt.subplots(
-            1, 1, figsize=(5, 5), subplot_kw={"projection": "3d"}
-        )
-        ax.plot_surface(X, Y, Z1 - Z2)
-        ax.set_title("Difference")
+    # plot the difference
+    fig, ax = plt.subplots(
+        1, 1, figsize=(5, 5), subplot_kw={"projection": "3d"}
+    )
+    ax.plot_surface(X, Y, Z1 - Z2)
+    ax.set_title("Difference")
 
 
 if __name__ == "__main__":
