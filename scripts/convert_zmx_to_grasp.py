@@ -79,11 +79,10 @@ def main():
     ax[1].set_title("Grasp")
 
     # plot the difference
-    fig, ax = plt.subplots(
-        1, 1, figsize=(5, 5), subplot_kw={"projection": "3d"}
-    )
-    ax.plot_surface(X, Y, Z1 - Z2)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    ax.contourf(X, Y, Z1 - Z2)
     ax.set_title("Difference")
+    fig.colorbar(ax.contourf(X, Y, Z1 - Z2))
 
 
 if __name__ == "__main__":

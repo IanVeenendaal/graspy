@@ -314,3 +314,11 @@ class TOR:
         )
         self._append_block_to_file(str(tabulated_pattern))
         return str(tabulated_pattern)
+
+
+def load_tor(file: Path) -> TOR:
+    # check if file exists
+    if not file.exists():
+        raise FileNotFoundError(f"{file} does not exist")
+
+    # read file and return TOR object
