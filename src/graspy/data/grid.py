@@ -10,7 +10,7 @@ def read_grd_file(file_path):
         source_field_name = file.readline().strip().split(":")[-1].strip()
         frequency_range_name = file.readline().strip().split(":")[-1].strip()
         assert file.readline().strip() == "FREQUENCIES [GHz]:"
-        frequency = float(file.readline().strip())
+        frequency = file.readline().strip()
 
         # read until "++++"
         while "++++" not in file.readline().strip():
