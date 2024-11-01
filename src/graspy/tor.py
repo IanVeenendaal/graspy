@@ -8,10 +8,27 @@ class struct(dict):
         super().__init__(*args, **kwargs)
         self.unit = unit
 
+        # check unit type
+        if not isinstance(self.unit, (str, list, dict, type(None))):
+            raise ValueError("unit must be a string, list or dict")
+
     def __repr__(self):
-        if self.unit == "":
+        if self.unit == "" or self.unit is None:
             return f"struct({', '.join(f'{k}: {v}' for k, v in self.items())})"
-        return f"struct({', '.join(f'{k}: {v} {self.unit}' for k, v in self.items())})"
+        elif isinstance(self.unit, dict):
+            struct_data = {}
+            for k, v in self.items():
+                if k in self.unit:
+                    struct_data[k] = f"{v} {self.unit[k]}"
+                else:
+                    struct_data[k] = f"{v}"
+            return f"struct({', '.join(f'{k}: {v}' for k, v in struct_data.items())})"
+        elif isinstance(self.unit, list):
+            return f"struct({', '.join(f'{k}: {v} {self.unit[i]}' for i, (k, v) in enumerate(self.items()))})"
+        elif isinstance(self.unit, str):
+            return f"struct({', '.join(f'{k}: {v} {self.unit}' for k, v in self.items())})"
+        else:
+            raise ValueError("unit must be a string, list or dict")
 
 
 class sequence(list):
@@ -45,10 +62,12 @@ class reference:
 
 @dataclass
 class CoordinateSystem:
+    name: str
     origin: struct
     x_axis: struct
+    y_axis: struct
+    z_axis: struct
     reference: reference
-    name: str
 
     def __repr__(self) -> str:
         out = (
@@ -56,6 +75,8 @@ class CoordinateSystem:
             f"(",
             f"{'  origin':19}: {self.origin},",
             f"{'  x_axis':19}: {self.x_axis},",
+            f"{'  y_axis':19}: {self.y_axis},",
+            f"{'  z_axis':19}: {self.z_axis},",
             f"{'  base':19}: {self.reference}",
             f")",
         )

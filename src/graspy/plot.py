@@ -58,6 +58,9 @@ def plot_slice(
     data["co_db"] = 20 * np.log10(data["co_abs"])
     data["cx_db"] = 20 * np.log10(data["cx_abs"])
 
+    data["Intensity"] = data["co_abs"] ** 2 + data["cx_abs"] ** 2
+    data["Intensity_db"] = 10 * np.log10(data["Intensity"])
+
     # Find peak of co-pol
     peak = np.argmax(data["co_db"].values)
     peak_x = data["x"].values[peak]
@@ -77,10 +80,6 @@ def plot_slice(
     elif direction == "diagonal":
         xp = np.linspace(-1, 1, 10001)
         yp = np.linspace(-1, 1, 10001)
-
-        # angle = np.radians(45)
-        # xp = x * np.cos(angle) - y * np.sin(angle)
-        # yp = x * np.sin(angle) + y * np.cos(angle)
 
         scale = (data["x"].max() - data["x"].min()) / 2
         xp *= scale
@@ -106,6 +105,13 @@ def plot_slice(
                 xi=(xp, yp),
                 method="linear",
             )
+        elif pol == "intensity":
+            interp2d = griddata(
+                (data["x"].values, data["y"].values),
+                data["Intensity"].values,
+                xi=(xp, yp),
+                method="linear",
+            )
         else:
             raise ValueError("Polarization must be 'co' or 'cx'")
         plt.figure(fignum)
@@ -118,6 +124,8 @@ def plot_slice(
         y_axis = "co_db"
     elif pol == "cx":
         y_axis = "cx_db"
+    elif pol == "intensity":
+        y_axis = "Intensity_db"
     else:
         raise ValueError("Polarization must be 'co' or 'cx'")
 
