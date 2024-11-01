@@ -139,3 +139,9 @@ def plot_slice(
 
     if xrange != "full":
         plt.xlim([peak_loc - xrange, peak_loc + xrange])
+
+    plt.ylim(-100, 0)
+    plt.xlabel(f"{direction} (deg)")
+    plt.ylabel("Intensity (dB)")
+    plt.legend()
+    plt.tight_layout()

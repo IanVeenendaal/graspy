@@ -49,12 +49,6 @@ def main():
                 fignum=f"{name}_{xrange}deg",
             )
 
-            plt.ylim(-100, 0)
-            plt.xlabel(f"{direction} (deg)")
-            plt.ylabel("Intensity (dB)")
-            plt.legend()
-            plt.tight_layout()
-
             # Save figure
             plt.savefig(save_fig_file, dpi=300)
 
