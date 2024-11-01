@@ -20,10 +20,12 @@ def read_grd_file(file_path):
         data = []
         ktype = int(file.readline().strip())
         nset, icomp, ncomp, igrid = [int(x) for x in file.readline().split()]
+
         for i in range(nset):
             # center of the grid
             ix, iy = [int(x) for x in file.readline().split()]
-            assert ix == 0 and iy == 0
+
+        for i in range(nset):
             # grid limits
             xs, ys, xe, ye = [float(x) for x in file.readline().split()]
             nx, ny, klimit = [int(x) for x in file.readline().split()]
