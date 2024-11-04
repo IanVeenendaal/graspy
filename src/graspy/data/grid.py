@@ -45,4 +45,9 @@ def read_grd_file(file_path):
 
         # convert to pandas dataframe
         df = pd.DataFrame(data, columns=["x", "y", "co", "cx"])
+
+        # exchange co and cx data if necessary
+        if max(df["co"].abs()) < max(df["cx"].abs()):
+            df["co"], df["cx"] = df["cx"], df["co"]
+
         return df
