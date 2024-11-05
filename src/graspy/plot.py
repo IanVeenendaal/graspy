@@ -65,7 +65,12 @@ def plot_slice(
     peak = np.argmax(data["co_db"].values)
     peak_x = data["x"].values[peak]
     peak_y = data["y"].values[peak]
-    print(f"Peak at {peak_x}, {peak_y}")
+
+    # Shift data to peaks
+    data["x"] -= peak_x
+    data["y"] -= peak_y
+    peak_x = 0
+    peak_y = 0
 
     # Plot slice at peak
     plt.figure(figsize=(5, 5), num="Slice")
@@ -141,7 +146,7 @@ def plot_slice(
         plt.xlim([peak_loc - xrange, peak_loc + xrange])
 
     plt.ylim(-100, 0)
-    plt.xlabel(f"{direction} (deg)")
+    plt.xlabel(f"Viewing Angle (deg)")
     plt.ylabel("Intensity (dB)")
     plt.legend()
     plt.tight_layout()
