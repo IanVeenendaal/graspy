@@ -83,3 +83,17 @@ def plot_cut_list(cuts: list[Cut]):
     fig, ax = plt.subplots(ncols=2, nrows=len(cuts) // 2, figsize=(12, 12))
     for i, cut in enumerate(cuts):
         plot_cut(cut, ax=ax[i // 2, i % 2])
+
+
+def save_cut_file(cuts: list[Cut], filename: Path):
+    with open(filename, "w") as f:
+        for cut in cuts:
+            f.write(f"{cut.title}\n")
+            f.write(
+                f"{cut.v_ini} {cut.v_inc} {cut.v_num} {cut.const} {cut.icomp} {cut.icut} {cut.ncomp}\n"
+            )
+            for i, row in cut.data.iterrows():
+                f.write(
+                    f"{row['co'].real} {row['co'].imag} {row['cx'].real} {row['cx'].imag}\n"
+                )
+    f.write("\n")
