@@ -96,4 +96,4 @@ def save_cut_file(cuts: list[Cut], filename: Path):
                 f.write(
                     f"{row['co'].real} {row['co'].imag} {row['cx'].real} {row['cx'].imag}\n"
                 )
-    f.write("\n")
+        f.write("\n")
