@@ -63,3 +63,37 @@ def parse_edi_beamwidths(filename: Path):
                 bw_array.iat[i * n_planes + k, j] = bw_values[idx]
 
     return bw_array
+
+
+def parse_edi_crosspol(filename: Path):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+
+    ns = {"edi": "http://www.edi-forum.org"}
+
+    # Get Frequencies
+    freqs = (
+        root.find(".//edi:Variable[@Class='Frequency']", ns)
+        .find("edi:Component", ns)
+        .find("edi:Value", ns)
+        .text.split()
+    )
+    freqs = [float(freq) * 1e-9 for freq in freqs]
+
+    # Get Cross-Pol Data
+    cp = root.find(".//edi:Variable[@Class='LevelCxMax']", ns)
+    comp = cp.find("edi:Component", ns)
+    cp_value = comp.find("edi:Value", ns)
+    cp_values = cp_value.text.split()
+    cp_values = [float(val) for val in cp_values]
+
+    # Reshape cp_values
+    n_freqs = len(freqs)
+    cp_array = pd.DataFrame(
+        index=pd.Index(freqs, name="Frequency (GHz)"),
+        columns=["Cross-Pol (dB)"],
+    )
+    for i in range(n_freqs):
+        cp_array.iat[i, 0] = cp_values[i]
+
+    return cp_array
