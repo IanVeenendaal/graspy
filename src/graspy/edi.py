@@ -61,3 +61,5 @@ def parse_edi_beamwidths(filename: Path):
             for k in range(n_planes):
                 idx = i * n_levels * n_planes + j * n_planes + k
                 bw_array.iat[i * n_planes + k, j] = bw_values[idx]
+
+    return bw_array
