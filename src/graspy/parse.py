@@ -15,6 +15,17 @@ def find_section(text: str, section_name: str) -> str:
         raise ValueError(f"Section {section_name} not found in the text.")
 
 
+def get_value_in_section(text: str, section_name: str, key: str) -> str:
+    section_content = find_section(text, section_name)
+    # Create a pattern to find the key-value pair
+    key_pattern = re.compile(rf"{key}\s*:\s*(.*),?")
+    match = key_pattern.search(section_content)
+    if match:
+        return match.group(1).strip()
+    else:
+        raise ValueError(f"Key {key} not found in section {section_name}.")
+
+
 def replace_value_in_section(
     text: str, section_name: str, key: str, new_value: str
 ) -> str:
