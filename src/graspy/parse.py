@@ -4,6 +4,32 @@ from pathlib import Path
 from graspy.tor import struct, reference, sequence
 
 
+def find_section(text: str, section_name: str) -> str:
+    # str_match = rf"{section_name}\s+(\w+)\s*\n\((.*?)\n\)"
+    str_match = rf"{section_name}\s+(\w+)\s*\n\((.*?)\n\)"
+    pattern = re.compile(str_match, re.DOTALL)
+    match = pattern.search(text)
+    if match:
+        return match.group(2).strip()
+    else:
+        raise ValueError(f"Section {section_name} not found in the text.")
+
+
+def replace_value_in_section(
+    text: str, section_name: str, key: str, new_value: str
+) -> str:
+    section_content = find_section(text, section_name)
+    # Create a pattern to find the key-value pair
+    key_pattern = re.compile(rf"({key}\s*:\s*)(.*)(,?)")
+    # Replace the value
+    new_section_content = key_pattern.sub(
+        rf"\g<1>{new_value}\g<3>", section_content
+    )
+    # Replace the old section content with the new one in the original text
+    new_text = text.replace(section_content, new_section_content)
+    return new_text
+
+
 def parse_tor(filename: Path):
     with open(filename, "r") as file:
         content = file.read()

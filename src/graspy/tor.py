@@ -262,7 +262,7 @@ class TOR:
 
     def _append_block_to_file(self, block: str) -> None:
         with open(self.file, "a") as f:
-            f.write(block)
+            f.write(block + "\n")
 
     def set_frequency(self, frequency: Frequency) -> str:
         self._append_block_to_file(str(frequency))
@@ -343,3 +343,4 @@ def load_tor(file: Path) -> TOR:
         raise FileNotFoundError(f"{file} does not exist")
 
     # read file and return TOR object
+    raise NotImplementedError("load_tor is not implemented yet")

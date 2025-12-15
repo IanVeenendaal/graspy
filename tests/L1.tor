@@ -1,0 +1,753 @@
+frequency_list  frequency  
+(
+  frequency_list   : sequence("ref(f0)" GHz,"ref(f1)" GHz,"ref(f2)" GHz,"ref(f3)" GHz,"ref(f4)" GHz,
+"ref(f5)" GHz)
+)
+ 
+smooth_throat_port_expansion_settings  circular_waveguide_port_modal_expansion_settings  
+(
+  m_min            : 1,
+  n_max            : -1,
+  m_max            : 1
+)
+ 
+smooth_throat_port  circular_waveguide_port  
+(
+  radius           : "ref(a_throat)" m,
+  port_expansion_settings : ref(smooth_throat_port_expansion_settings)
+)
+ 
+smooth_aperture_port_expansion_settings  circular_waveguide_port_modal_expansion_settings  
+(
+  m_min            : 1,
+  n_max            : -1,
+  m_max            : 1
+)
+ 
+smooth_aperture_port  circular_waveguide_port  
+(
+  radius           : "ref(a_aperture)" m,
+  port_expansion_settings : ref(smooth_aperture_port_expansion_settings)
+)
+ 
+smooth_smooth_horn_section  smooth_walled_section  
+(
+  profile          : ref(spline_profile)
+)
+ 
+smooth_mode_matching_settings  mode_matching_settings  
+(
+)
+ 
+smooth_horn_interior  circular_symmetric_horn  
+(
+  frequency        : ref(frequency_list),
+  port_1           : ref(smooth_throat_port),
+  port_2           : ref(smooth_aperture_port),
+  horn_section     : ref(combined_horn_section),
+  analysis_settings : ref(smooth_mode_matching_settings),
+  device_library   : struct(max_elements: -1, max_size_mb: -1, allow_one: yes)
+)
+ 
+smooth_circular_waveguide_mode  circular_waveguide_mode  
+(
+  m_index          : 1,
+  n_index          : 1
+)
+ 
+smooth_circular_symmetric_horn_exterior  circular_symmetric_horn_exterior  
+(
+  nodes            : table
+    (
+      0.00000E+00  "ref(a_aperture)+0.0001"  
+    "-ref(L)"  "ref(a_aperture)+0.0001"  
+    )
+)
+ 
+smooth_MoM_settings  mom_settings  
+(
+)
+ 
+smooth_horn_aperture  circular_symmetric_aperture  
+(
+  frequency        : ref(frequency_list),
+  waveguide_port   : ref(smooth_aperture_port),
+  exterior         : ref(smooth_circular_symmetric_horn_exterior),
+  analysis_settings : ref(smooth_MoM_settings)
+)
+ 
+smooth_combined_device  combined_device  
+(
+  devices          : sequence(ref(smooth_horn_interior),ref(smooth_horn_aperture)),
+  device_library   : struct(max_elements: -1, max_size_mb: -1, allow_one: yes)
+)
+ 
+smooth_radiating_device  radiating_device  
+(
+  device           : ref(smooth_combined_device),
+  port_excitation  : sequence
+    (    struct(port: ref(smooth_throat_port), waveguide_mode: ref(smooth_circular_waveguide_mode), 
+amplitude: 1.0, phase: 0.0)
+    )
+)
+ 
+smooth_Band1_cut  spherical_cut  
+(
+  theta_range      : struct(start: -180.0, end: 180.0, np: 761),
+  phi_range        : struct(start: 0.0, end: 90.0, np: 3),
+  frequency        : ref(frequency_list)
+)
+ 
+optimisation_manager  optimisation_manager  
+(
+  variables        : sequence(ref(optimisation_manager_variables_default)),
+  goals            : sequence
+    (    struct(goal: ref(minimize_crosspol), weight: 5.0),
+    struct(goal: ref(amax_lt_ao), weight: 1000000000.0),
+    struct(goal: ref(goal_scattering_parameter), weight: 1.0),
+    struct(goal: ref(goal_far_field_phase_centre_variation), weight: 1.0),
+    struct(goal: ref(goal_far_field_pattern_template), weight: 25.0),
+    struct(goal: ref(goal_far_field_phase_centre_location), weight: 1.0),
+    struct(goal: ref(goal_far_field_efficiency), weight: 1.0)
+    ),
+  optimisation_settings : ref(optimisation_setting_01)
+)
+ 
+L  real_variable  
+(
+  value            : 0.837766021306577E-01
+)
+ 
+spline_profile  spline_profile  
+(
+  data_points      : table
+    (
+      0.00000E+00  "ref(a_throat)"  
+    "1*ref(L)/25"  "ref(a000)"  
+    "2*ref(L)/25"  "ref(a001)"  
+    "3*ref(L)/25"  "ref(a002)"  
+    "4*ref(L)/25"  "ref(a003)"  
+    "5*ref(L)/25"  "ref(a004)"  
+    "6*ref(L)/25"  "ref(a005)"  
+    "7*ref(L)/25"  "ref(a006)"  
+    "8*ref(L)/25"  "ref(a007)"  
+    "9*ref(L)/25"  "ref(a008)"  
+    "10*ref(L)/25"  "ref(a009)"  
+    "11*ref(L)/25"  "ref(a010)"  
+    "12*ref(L)/25"  "ref(a011)"  
+    "13*ref(L)/25"  "ref(a012)"  
+    "14*ref(L)/25"  "ref(a013)"  
+    "15*ref(L)/25"  "ref(a014)"  
+    "16*ref(L)/25"  "ref(a015)"  
+    "17*ref(L)/25"  "ref(a016)"  
+    "18*ref(L)/25"  "ref(a017)"  
+    "19*ref(L)/25"  "ref(a018)"  
+    "20*ref(L)/25"  "ref(a019)"  
+    "21*ref(L)/25"  "ref(a020)"  
+    "22*ref(L)/25"  "ref(a021)"  
+    "23*ref(L)/25"  "ref(a022)"  
+    "24*ref(L)/25"  "ref(a023)"  
+    "ref(L)"  "ref(a_aperture)"  
+    )
+)
+ 
+goal_far_field_phase_centre_variation  goal_far_field_phase_centre_variation  
+(
+  source           : sequence(ref(smooth_radiating_device)),
+  goal_spec        : sequence
+    (    struct(beam_index: 1, theta_max: 30.0, component: linear_x, goal: 0.0 m, weight: 1000.0, action: 
+minimise)
+    )
+)
+ 
+goal_scattering_parameter  goal_scattering_parameter  
+(
+  device           : ref(smooth_combined_device),
+  goal_spec        : sequence
+    (    struct(frequency_index: 1, input_port: ref(smooth_throat_port), input_mode: 
+ref(smooth_circular_waveguide_mode), output_port: ref(smooth_throat_port), output_mode: 
+ref(smooth_circular_waveguide_mode), type: amplitude, goal: -20.0, weight: 1.0, action: minimise)
+    )
+)
+ 
+optimisation_setting  minmax_settings  
+(
+  autoscaling      : on
+)
+ 
+minimize_crosspol  goal_far_field_angular_region  
+(
+  source           : sequence(ref(smooth_radiating_device)),
+  goal_spec        : sequence
+    (    struct(frequency_index: -1, beam_index: 1, theta_max: 60.0, component: linear_y, goal: -20.0, 
+weight: 1.0, action: minimise)
+    ),
+  normalise_to_peak : struct(normalise: yes, theta_max: 30.0, theta_resolution: 0.5, phi_resolution: 2.0, 
+component: linear_x)
+)
+ 
+edge_taper  goal_far_field_specific_direction  
+(
+  source           : sequence(ref(smooth_radiating_device)),
+  goal_spec        : sequence
+    (    struct(frequency_index: 1, beam_index: 1, coor_1: 10.104, coor_2: 0.0, component: linear_x, goal: 
+-3.0, weight: 1.0, action: target),
+    struct(frequency_index: 1, beam_index: 1, coor_1: 10.104, coor_2: 45.0, component: linear_x, goal: -3.0, 
+weight: 1.0, action: target),
+    struct(frequency_index: 1, beam_index: 1, coor_1: 10.104, coor_2: 90.0, component: linear_x, goal: -3.0, 
+weight: 1.0, action: target)
+    ),
+  normalise_to_peak : struct(normalise: yes, theta_max: 30.0, theta_resolution: 0.5, phi_resolution: 2.0, 
+component: linear_x)
+)
+ 
+goal_far_field_efficiency  goal_far_field_efficiency  
+(
+  source           : sequence(ref(smooth_radiating_device)),
+  goal_spec        : sequence
+    (    struct(frequency_index: -1, beam_index: 1, component: linear_x, main_lobe_definition: down_from_peak
+, db_level: 3.0, centre_x: 0.0, centre_y: 0.0, dim_x: 0.0, dim_y: 0.0, rot: 0.0, goal: 0.8, weight: 1.0, 
+action: maximise)
+    ),
+  x_range          : struct(start: -1.0, end: 1.0, np: 101),
+  y_range          : struct(start: -1.0, end: 1.0, np: 101),
+  truncation       : elliptical
+)
+ 
+amax_lt_ao  optim_goals_expression  
+(
+  expression       : "(ref(a024)-ref(a_aperture))",
+  action           : minimise
+)
+ 
+goal_far_field_phase_centre_location  goal_far_field_phase_centre_location  
+(
+  source           : sequence(ref(smooth_radiating_device)),
+  goal_spec        : sequence
+    (    struct(frequency_index: -1, beam_index: 1, theta_max: 90.0, component: linear_x, x: 0.0 m, y: 0.0 m, 
+z: 0.0 m, goal: 0.0 m, weight: 1000.0, action: target)
+    )
+)
+ 
+a_throat  real_variable  
+(
+  value            : "0.002842"
+)
+ 
+a_aperture  real_variable  
+(
+  value            : "0.015685"
+)
+ 
+circular_waveguide_section  circular_waveguide_section  
+(
+  radius           : "ref(a_throat)" m,
+  length           : "2*0.3/ref(f0)" m
+)
+ 
+combined_horn_section  combined_horn_section  
+(
+  horn_sections    : sequence(ref(circular_waveguide_section),ref(smooth_smooth_horn_section))
+)
+ 
+optimisation_setting_01  onesided_lsq_settings  
+(
+  autoscaling      : on
+)
+ 
+optimisation_setting_02  mcs_settings  
+(
+  objective_measure : onesided_least_squares,
+  inner_solver     : derivatives,
+  autoscaling      : on
+)
+ 
+optimisation_setting_03  cmaes_settings  
+(
+)
+ 
+optimisation_setting_04  derivative_free_settings  
+(
+)
+ 
+pattern_template  piecewise_lin_pattern_template  
+(
+  template         : table
+    (
+      0.00000E+00    0.00000E+00  
+      3.00000E+00   -2.20000E-01  
+      5.00000E+00   -7.60000E-01  
+      8.00000E+00   -1.75000E+00  
+      9.949999999999999E+00   -3.00000E+00  
+      1.50000E+01   -1.00000E+01  
+      2.50000E+01   -2.00000E+01  
+      4.00000E+01   -2.00000E+01  
+    )
+)
+ 
+goal_far_field_pattern_template  goal_far_field_pattern_template  
+(
+  source           : sequence(ref(smooth_radiating_device)),
+  goal_spec        : sequence
+    (    struct(frequency_index: 1, beam_index: 1, component: linear_x, template: ref(pattern_F1), weight: 1.0
+, action: target),
+    struct(frequency_index: 2, beam_index: 1, component: linear_x, template: ref(pattern_F2), weight: 1.0, 
+action: target),
+    struct(frequency_index: 4, beam_index: 1, component: linear_x, template: ref(pattern_F4), weight: 1.0, 
+action: target)
+    ),
+  theta_resolution : 1.0,
+  normalise_to_peak : struct(normalise: yes, theta_max: 30.0, theta_resolution: 0.5, phi_resolution: 2.0, 
+component: linear_x)
+)
+ 
+Optimum_L  optim_goals_expression  
+(
+  expression       : "ref(L)",
+  goal             : 0.58E-01,
+  weight           : 1000.0,
+  action           : target
+)
+ 
+optimisation_setting_05  ga_settings  
+(
+  objective_measure : onesided_least_squares
+)
+ 
+pattern_template_stepped  piecewise_lin_pattern_template  
+(
+  template         : table
+    (
+      0.00000E+00    0.00000E+00  
+      9.90000E+00    0.00000E+00  
+      9.949999999999999E+00   -3.00000E+00  
+      1.99000E+01   -3.00000E+00  
+      2.00000E+01   -1.00000E+01  
+      2.99000E+01   -1.00000E+01  
+      3.00000E+01   -2.00000E+01  
+    )
+)
+ 
+f0  real_variable  
+(
+  value            : "34"
+)
+ 
+f1  real_variable  
+(
+  value            : "40"
+)
+ 
+f2  real_variable  
+(
+  value            : "46"
+)
+ 
+f3  real_variable  
+(
+  value            : "51.85"
+)
+ 
+f4  real_variable  
+(
+  value            : "61"
+)
+ 
+f5  real_variable  
+(
+  value            : "70.15"
+)
+ 
+pattern_F1  piecewise_lin_pattern_template  
+(
+  template         : table
+    (
+      0.00000E+00    0.00000E+00  
+      2.00000E+00   -1.00000E-01  
+      5.00000E+00   -7.00000E-01  
+      1.01040E+01   -3.00000E+00  
+      1.50000E+01   -7.00000E+00  
+      1.73000E+01   -1.00000E+01  
+    )
+)
+ 
+pattern_F2  piecewise_lin_pattern_template  
+(
+  template         : table
+    (
+      0.00000E+00    0.00000E+00  
+      1.70000E+00   -1.00000E-01  
+      4.25000E+00   -7.00000E-01  
+      8.58840E+00   -3.00000E+00  
+      1.27500E+01   -7.00000E+00  
+      1.47050E+01   -1.00000E+01  
+    )
+)
+ 
+pattern_F4  piecewise_lin_pattern_template  
+(
+  template         : table
+    (
+      0.00000E+00    0.00000E+00  
+      1.114754098000000E+00   -1.00000E-01  
+      2.786885246000000E+00   -7.00000E-01  
+      5.631737705000000E+00   -3.00000E+00  
+      8.360655738000000E+00   -7.00000E+00  
+      9.642622951000000E+00   -1.00000E+01  
+    )
+)
+ 
+x000  real_variable  
+(
+  value            : 0.1076677997085E-02
+)
+ 
+a001  real_variable  
+(
+  value            : "ref(a000)+ref(x001)"
+)
+ 
+x001  real_variable  
+(
+  value            : 0.969120317642971E-03
+)
+ 
+a002  real_variable  
+(
+  value            : "ref(a001)+ref(x002)"
+)
+ 
+x002  real_variable  
+(
+  value            : 0.434161828091825E-03
+)
+ 
+a003  real_variable  
+(
+  value            : "ref(a002)+ref(x003)"
+)
+ 
+x003  real_variable  
+(
+  value            : 0.456031960677393E-03
+)
+ 
+a004  real_variable  
+(
+  value            : "ref(a003)+ref(x004)"
+)
+ 
+x004  real_variable  
+(
+  value            : 0.336747985034888E-04
+)
+ 
+a005  real_variable  
+(
+  value            : "ref(a004)+ref(x005)"
+)
+ 
+x005  real_variable  
+(
+  value            : 0.31051442801513E-03
+)
+ 
+a006  real_variable  
+(
+  value            : "ref(a005)+ref(x006)"
+)
+ 
+x006  real_variable  
+(
+  value            : 0.365176667476859E-03
+)
+ 
+a007  real_variable  
+(
+  value            : "ref(a006)+ref(x007)"
+)
+ 
+x007  real_variable  
+(
+  value            : 0.450619832298151E-03
+)
+ 
+a008  real_variable  
+(
+  value            : "ref(a007)+ref(x008)"
+)
+ 
+x008  real_variable  
+(
+  value            : 0.268044129513594E-04
+)
+ 
+a009  real_variable  
+(
+  value            : "ref(a008)+ref(x009)"
+)
+ 
+x009  real_variable  
+(
+  value            : 0.19261621853466E-04
+)
+ 
+a010  real_variable  
+(
+  value            : "ref(a009)+ref(x010)"
+)
+ 
+x010  real_variable  
+(
+  value            : 0.182710678899032E-04
+)
+ 
+a011  real_variable  
+(
+  value            : "ref(a010)+ref(x011)"
+)
+ 
+x011  real_variable  
+(
+  value            : 0.411979705058384E-06
+)
+ 
+a012  real_variable  
+(
+  value            : "ref(a011)+ref(x012)"
+)
+ 
+x012  real_variable  
+(
+  value            : 0.421908396300204E-03
+)
+ 
+a013  real_variable  
+(
+  value            : "ref(a012)+ref(x013)"
+)
+ 
+x013  real_variable  
+(
+  value            : 0.874116573186058E-04
+)
+ 
+a014  real_variable  
+(
+  value            : "ref(a013)+ref(x014)"
+)
+ 
+x014  real_variable  
+(
+  value            : 0.863493418818921E-03
+)
+ 
+a015  real_variable  
+(
+  value            : "ref(a014)+ref(x015)"
+)
+ 
+x015  real_variable  
+(
+  value            : 0.100720397127449E-02
+)
+ 
+a016  real_variable  
+(
+  value            : "ref(a015)+ref(x016)"
+)
+ 
+x016  real_variable  
+(
+  value            : 0.127416899271484E-02
+)
+ 
+a017  real_variable  
+(
+  value            : "ref(a016)+ref(x017)"
+)
+ 
+x017  real_variable  
+(
+  value            : 0.119226771846121E-02
+)
+ 
+a018  real_variable  
+(
+  value            : "ref(a017)+ref(x018)"
+)
+ 
+x018  real_variable  
+(
+  value            : 0.135621413806686E-03
+)
+ 
+a019  real_variable  
+(
+  value            : "ref(a018)+ref(x019)"
+)
+ 
+x019  real_variable  
+(
+  value            : 0.408531951660203E-03
+)
+ 
+a020  real_variable  
+(
+  value            : "ref(a019)+ref(x020)"
+)
+ 
+x020  real_variable  
+(
+  value            : 0.776669405601886E-03
+)
+ 
+a021  real_variable  
+(
+  value            : "ref(a020)+ref(x021)"
+)
+ 
+x021  real_variable  
+(
+  value            : 0.911291806587777E-03
+)
+ 
+a022  real_variable  
+(
+  value            : "ref(a021)+ref(x022)"
+)
+ 
+x022  real_variable  
+(
+  value            : 0.304002070090773E-03
+)
+ 
+a023  real_variable  
+(
+  value            : "ref(a022)+ref(x023)"
+)
+ 
+x023  real_variable  
+(
+  value            : 0.876426182101666E-03
+)
+ 
+a024  real_variable  
+(
+  value            : "ref(a023)+ref(x024)"
+)
+ 
+x024  real_variable  
+(
+  value            : 0.289503530835143E-03
+)
+ 
+optimisation_manager_variables_default  real_optimisation_variables  
+(
+  real_variables   : sequence
+    (    struct(variable_object: ref(x010), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x002), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x005), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x022), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x016), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x023), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x009), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x019), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x012), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x015), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x008), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x013), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x007), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x001), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x011), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x020), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x017), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x021), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x000), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x006), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x004), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x018), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x014), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x024), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(x003), min_enabled: on, min: 0.0, max_enabled: on, max: 0.3E-02),
+    struct(variable_object: ref(L), min_enabled: on, min: 0.3E-01, max_enabled: on, max: 0.9E-01)
+    )
+)
+ 
+a000  real_variable  
+(
+  value            : "ref(a_throat)+ref(x000)"
+)
+ 
+//DO NOT MODIFY OBJECTS BELOW THIS LINE.
+//THESE OBJECTS ARE CREATED AND MANAGED BY THE
+//GRAPHICAL USER INTERFACE AND SHOULD NOT BE
+//MODIFIED MANUALLY!
+view_1  view  
+(
+  objects          : sequence(ref(bor_plot_for_view_1),ref(radiating_device_plot_for_view_1),
+ref(output_points_plot_for_view_1))
+)
+ 
+bor_plot_for_view_1  bor_plot  
+(
+)
+ 
+radiating_device_plot_for_view_1  radiating_device_plot  
+(
+)
+ 
+output_points_plot_for_view_1  output_points_plot  
+(
+)
+ 
+device_plot  device_plot  
+(
+  objects          : sequence(ref(smooth_horn_interior)),
+  root_device      : ref(smooth_combined_device)
+)
+ 
+device_view  device_view  
+(
+  objects          : sequence(ref(device_plot)),
+  dimension        : 2D
+)
+ 
+device_plot_01  device_plot  
+(
+  objects          : sequence(ref(smooth_combined_device)),
+  root_device      : ref(smooth_combined_device)
+)
+ 
+device_view_01  device_view  
+(
+  objects          : sequence(ref(device_plot_01)),
+  dimension        : 2D
+)
+ 
+device_plot_02  device_plot  
+(
+  objects          : sequence(ref(smooth_horn_interior)),
+  root_device      : ref(smooth_combined_device)
+)
+ 
+device_view_02  device_view  
+(
+  objects          : sequence(ref(device_plot_02)),
+  dimension        : 2D
+)
+ 
+device_plot_03  device_plot  
+(
+  objects          : sequence(ref(smooth_combined_device)),
+  root_device      : ref(smooth_combined_device)
+)
+ 
+device_view_03  device_view  
+(
+  objects          : sequence(ref(device_plot_03)),
+  dimension        : 2D
+)
+ 
+ //$$ Saved at 16:27:34 on 12.12.2025 by TICRA Tools 23.0 SN=012211
+  
