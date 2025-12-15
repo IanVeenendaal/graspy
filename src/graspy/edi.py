@@ -16,9 +16,9 @@ def parse_edi_beamwidths(filename: Path):
         .find("edi:Value", ns)
         .text.split()
     )
-    freqs = [float(freq) for freq in freqs]
+    freqs = [float(freq) * 1e-9 for freq in freqs]
 
-    # Get Beamwidth Data
+    # Get Beamwidth Levels
     levels = (
         root.find(".//edi:Variable[@Class='BeamWidthLevels']", ns)
         .find("edi:Component", ns)
@@ -27,6 +27,16 @@ def parse_edi_beamwidths(filename: Path):
     )
     levels = [float(lvl) for lvl in levels]
 
+    # Get Phi Planes
+    phi = (
+        root.find(".//edi:Variable[@Class='Phi']", ns)
+        .find("edi:Component", ns)
+        .find("edi:Value", ns)
+        .text.split()
+    )
+    phi = [float(p) for p in phi]
+
+    # Get Beamwidth Data
     data = root.find("edi:Data", ns)
     bw = data.find(
         ".//edi:Variable[@Name='smooth_radiating_device_BeamWidth']", ns
@@ -36,15 +46,18 @@ def parse_edi_beamwidths(filename: Path):
     bw_values = bw_value.text.split()
     bw_values = [float(val) for val in bw_values]
 
-    # Reshape bw_values into a 2D list
+    # Reshape bw_values
     n_levels = len(levels)
     n_freqs = len(freqs)
-    bw_matrix = []
-    for i in range(n_levels):
-        start_idx = i * n_freqs
-        end_idx = start_idx + n_freqs
-        bw_matrix.append(bw_values[start_idx:end_idx])
-    bw_df = pd.DataFrame(bw_matrix, index=levels, columns=freqs)
-    bw_df.index.name = "Beamwidth Levels (deg)"
-    bw_df.columns.name = "Frequencies (GHz)"
-    return bw_df
+    n_planes = len(phi)
+    bw_array = pd.DataFrame(
+        index=pd.MultiIndex.from_product(
+            [freqs, phi], names=["Frequency (GHz)", "Phi (deg)"]
+        ),
+        columns=[f"BW Level {lvl} (dB)" for lvl in levels],
+    )
+    for i in range(n_freqs):
+        for j in range(n_levels):
+            for k in range(n_planes):
+                idx = i * n_levels * n_planes + j * n_planes + k
+                bw_array.iat[i * n_planes + k, j] = bw_values[idx]
