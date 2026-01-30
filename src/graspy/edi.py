@@ -10,13 +10,7 @@ def parse_edi_phase_centers(filename: Path):
     ns = {"edi": "http://www.edi-forum.org"}
 
     # Get Frequencies
-    freqs = (
-        root.find(".//edi:Variable[@Class='Frequency']", ns)
-        .find("edi:Component", ns)
-        .find("edi:Value", ns)
-        .text.split()
-    )
-    freqs = [float(freq) * 1e-9 for freq in freqs]
+    freqs = get_frequencies_from_edi(filename)
 
     # Get Beamwidth Levels
     levels = (
@@ -72,13 +66,7 @@ def parse_edi_beamwidths(filename: Path):
     ns = {"edi": "http://www.edi-forum.org"}
 
     # Get Frequencies
-    freqs = (
-        root.find(".//edi:Variable[@Class='Frequency']", ns)
-        .find("edi:Component", ns)
-        .find("edi:Value", ns)
-        .text.split()
-    )
-    freqs = [float(freq) * 1e-9 for freq in freqs]
+    freqs = get_frequencies_from_edi(filename)
 
     # Get Beamwidth Levels
     levels = (
@@ -134,13 +122,7 @@ def parse_edi_crosspol(filename: Path):
     ns = {"edi": "http://www.edi-forum.org"}
 
     # Get Frequencies
-    freqs = (
-        root.find(".//edi:Variable[@Class='Frequency']", ns)
-        .find("edi:Component", ns)
-        .find("edi:Value", ns)
-        .text.split()
-    )
-    freqs = [float(freq) * 1e-9 for freq in freqs]
+    freqs = get_frequencies_from_edi(filename)
 
     # Get Cross-Pol Data
     cp = root.find(".//edi:Variable[@Class='LevelCxMax']", ns)
@@ -168,13 +150,7 @@ def parse_edi_efficiency(filename: Path):
     ns = {"edi": "http://www.edi-forum.org"}
 
     # Get Frequencies
-    freqs = (
-        root.find(".//edi:Variable[@Class='Frequency']", ns)
-        .find("edi:Component", ns)
-        .find("edi:Value", ns)
-        .text.split()
-    )
-    freqs = [float(freq) * 1e-9 for freq in freqs]
+    freqs = get_frequencies_from_edi(filename)
 
     # Get Efficiency Data
     eff = (
@@ -190,3 +166,29 @@ def parse_edi_efficiency(filename: Path):
         index=pd.Index(freqs, name="Frequency (GHz)"),
     )
     return eff_df
+
+
+def get_frequencies_from_edi(filename: Path):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+
+    ns = {"edi": "http://www.edi-forum.org"}
+
+    try:
+        freqs = (
+            root.find(".//edi:Variable[@Class='Frequency']", ns)
+            .find("edi:Component", ns)
+            .find("edi:Value", ns)
+            .text.split()
+        )
+    except AttributeError:
+        data = root.find("edi:Data", ns)
+        freqs = (
+            data.find(".//edi:Variable[@Class='Frequency']", ns)
+            .find("edi:Component", ns)
+            .find("edi:Value", ns)
+            .text.split()
+        )
+
+    freqs = [float(freq) * 1e-9 for freq in freqs]
+    return freqs
