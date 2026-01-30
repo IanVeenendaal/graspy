@@ -184,7 +184,7 @@ def get_frequencies_from_edi(filename: Path):
     except AttributeError:
         data = root.find("edi:Data", ns)
         freqs = (
-            data.find(".//edi:Variable[@Class='Frequency']", ns)
+            data.find(".//edi:Variable[@Name='frequency']", ns)
             .find("edi:Component", ns)
             .find("edi:Value", ns)
             .text.split()
